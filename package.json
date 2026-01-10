@@ -1,0 +1,32 @@
+{
+  "name": "test-readability-score",
+  "version": "1.0.0",
+  "description": "CLI tool to analyze Playwright test files for readability and maintainability",
+  "main": "dist/index.js",
+  "bin": {
+    "test-readability-score": "./dist/index.js"
+  },
+  "scripts": {
+    "build": "tsc",
+    "start": "node dist/index.js",
+    "dev": "ts-node src/index.ts"
+  },
+  "keywords": [
+    "playwright",
+    "testing",
+    "readability",
+    "code-quality",
+    "cli"
+  ],
+  "author": "Gary Parker",
+  "license": "MIT",
+  "devDependencies": {
+    "@types/node": "^20.10.0",
+    "typescript": "^5.3.0"
+  },
+  "dependencies": {
+    "@typescript-eslint/parser": "^6.13.0",
+    "@typescript-eslint/typescript-estree": "^6.13.0",
+    "commander": "^11.1.0"
+  }
+}
