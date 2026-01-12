@@ -63,7 +63,8 @@ test-readability-score ./tests/ --verbose
 | Option | Description | Default |
 |--------|-------------|---------|
 | `-t, --threshold <n>` | Minimum passing score (0-100). Exits with code 1 if overall score is below. | `70` |
-| `-f, --format <fmt>` | Output format: `text` for human-readable, `json` for machine-readable | `text` |
+| `-f, --format <fmt>` | Output format: `text`, `json`, or `html` | `text` |
+| `-o, --output <file>` | Output file path (required for html format) | `readability-report.html` |
 | `-v, --verbose` | Show individual test details for files below threshold | `false` |
 
 ## Example Output
@@ -271,6 +272,52 @@ For CI integration, use `--format json`:
     }
   ]
 }
+```
+
+## HTML Report
+
+Generate a visual HTML report for easier review:
+
+```bash
+test-readability-score ./tests/ -f html -o report.html
+```
+
+The HTML report includes:
+
+- **Score summary** with overall grade and distribution chart
+- **File breakdown** with expandable sections showing individual test scores
+- **Color-coded grades** (green for A/B, yellow for C/D, red for F)
+- **Actionable suggestions** displayed alongside each test
+
+To view an example, generate the report from the included examples:
+
+```bash
+node dist/index.js ./examples -f html -o examples/sample-report.html
+open examples/sample-report.html
+```
+
+### HTML Report Preview
+
+```
+┌────────────────────────────────────────────────────────────────────┐
+│                     TEST READABILITY REPORT                        │
+├────────────────────────────────────────────────────────────────────┤
+│  Overall Score: 89/100 (Grade B)                                   │
+│  Files: 3 | Tests: 17                                              │
+├────────────────────────────────────────────────────────────────────┤
+│  📊 Score Distribution                                             │
+│  ████████████████░░░░  A: 2 files                                  │
+│  ░░░░░░░░░░░░░░░░░░░░  B: 0 files                                  │
+│  ████████░░░░░░░░░░░░  C: 1 file                                   │
+├────────────────────────────────────────────────────────────────────┤
+│  📁 poor-tests.spec.ts  [Score: 52/100 - Grade F]                  │
+│  ├─ test1                                    45/100   ⚠️            │
+│  │  └─ Test name is too short                                      │
+│  │  └─ No assertions found                                         │
+│  ├─ should handle everything in one test     38/100   ⚠️            │
+│  │  └─ Too many assertions (15)                                    │
+│  │  └─ Deep nesting detected (6 levels)                            │
+└────────────────────────────────────────────────────────────────────┘
 ```
 
 ## CI Integration

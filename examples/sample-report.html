@@ -1,0 +1,557 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Test Readability Score Report</title>
+  <style>
+    * { box-sizing: border-box; margin: 0; padding: 0; }
+    body {
+      font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Oxygen, Ubuntu, sans-serif;
+      line-height: 1.6;
+      color: #333;
+      background: #f5f5f5;
+      padding: 20px;
+    }
+    .container { max-width: 1200px; margin: 0 auto; }
+    h1, h2, h3 { margin-bottom: 16px; }
+    h1 { color: #1a1a2e; font-size: 28px; }
+    h2 { color: #16213e; font-size: 22px; border-bottom: 2px solid #e94560; padding-bottom: 8px; margin-top: 32px; }
+    h3 { color: #0f3460; font-size: 18px; }
+
+    .card {
+      background: white;
+      border-radius: 12px;
+      padding: 24px;
+      margin-bottom: 20px;
+      box-shadow: 0 2px 8px rgba(0,0,0,0.08);
+    }
+
+    .summary-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+      gap: 20px;
+      margin-bottom: 24px;
+    }
+
+    .stat-box {
+      text-align: center;
+      padding: 20px;
+      background: #f8f9fa;
+      border-radius: 8px;
+    }
+
+    .stat-value { font-size: 48px; font-weight: bold; }
+    .stat-label { color: #666; font-size: 14px; text-transform: uppercase; }
+
+    .score-a { color: #22c55e; }
+    .score-b { color: #84cc16; }
+    .score-c { color: #eab308; }
+    .score-d { color: #f97316; }
+    .score-f { color: #ef4444; }
+
+    .grade-badge {
+      display: inline-block;
+      padding: 4px 12px;
+      border-radius: 20px;
+      font-weight: bold;
+      font-size: 14px;
+    }
+    .grade-badge.score-a { background: #dcfce7; }
+    .grade-badge.score-b { background: #ecfccb; }
+    .grade-badge.score-c { background: #fef9c3; }
+    .grade-badge.score-d { background: #ffedd5; }
+    .grade-badge.score-f { background: #fee2e2; }
+
+    .distribution-bar {
+      display: flex;
+      height: 32px;
+      border-radius: 8px;
+      overflow: hidden;
+      margin: 16px 0;
+    }
+    .distribution-bar > div {
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      color: white;
+      font-weight: bold;
+      font-size: 12px;
+      min-width: 30px;
+    }
+    .bar-a { background: #22c55e; }
+    .bar-b { background: #84cc16; }
+    .bar-c { background: #eab308; }
+    .bar-d { background: #f97316; }
+    .bar-f { background: #ef4444; }
+
+    .distribution-legend {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 16px;
+      font-size: 14px;
+    }
+    .legend-item { display: flex; align-items: center; gap: 6px; }
+    .legend-dot {
+      width: 12px;
+      height: 12px;
+      border-radius: 50%;
+    }
+
+    .file-list { margin-top: 16px; }
+    .file-item {
+      border: 1px solid #e5e7eb;
+      border-radius: 8px;
+      margin-bottom: 12px;
+      overflow: hidden;
+    }
+    .file-header {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      padding: 16px;
+      background: #f9fafb;
+      cursor: pointer;
+      gap: 12px;
+    }
+    .file-header:hover { background: #f3f4f6; }
+    .file-path {
+      font-family: 'Monaco', 'Menlo', monospace;
+      font-size: 14px;
+      word-break: break-all;
+      flex: 1;
+    }
+    .file-meta {
+      display: flex;
+      gap: 16px;
+      font-size: 13px;
+      color: #666;
+      flex-shrink: 0;
+    }
+    .file-content {
+      display: none;
+      padding: 16px;
+      border-top: 1px solid #e5e7eb;
+      background: white;
+    }
+    .file-item.expanded .file-content { display: block; }
+    .file-item.expanded .expand-icon { transform: rotate(180deg); }
+    .expand-icon { transition: transform 0.2s; }
+
+    .suggestion {
+      display: flex;
+      align-items: flex-start;
+      gap: 8px;
+      padding: 8px 12px;
+      background: #fef3c7;
+      border-radius: 6px;
+      margin-bottom: 8px;
+      font-size: 14px;
+    }
+    .suggestion-icon { flex-shrink: 0; }
+
+    .test-item {
+      padding: 12px;
+      border: 1px solid #e5e7eb;
+      border-radius: 6px;
+      margin-bottom: 8px;
+    }
+    .test-name {
+      font-family: 'Monaco', 'Menlo', monospace;
+      font-size: 13px;
+      margin-bottom: 8px;
+    }
+    .test-scores {
+      display: flex;
+      gap: 12px;
+      flex-wrap: wrap;
+      font-size: 12px;
+    }
+    .test-score-item {
+      padding: 4px 8px;
+      background: #f3f4f6;
+      border-radius: 4px;
+    }
+
+    .criteria-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
+      gap: 16px;
+    }
+    .criteria-item {
+      padding: 16px;
+      background: #f8f9fa;
+      border-radius: 8px;
+      border-left: 4px solid #e94560;
+    }
+    .criteria-title { font-weight: bold; margin-bottom: 4px; }
+    .criteria-weight { color: #666; font-size: 13px; }
+
+    .timestamp {
+      text-align: center;
+      color: #999;
+      font-size: 12px;
+      margin-top: 32px;
+    }
+
+    @media (max-width: 768px) {
+      .summary-grid { grid-template-columns: 1fr 1fr; }
+      .file-meta { flex-direction: column; gap: 4px; }
+    }
+  </style>
+</head>
+<body>
+  <div class="container">
+    <div class="card">
+      <h1>📊 Test Readability Score Report</h1>
+
+      <div class="summary-grid">
+        <div class="stat-box">
+          <div class="stat-value score-b">89</div>
+          <div class="stat-label">Overall Score</div>
+        </div>
+        <div class="stat-box">
+          <div class="stat-value">B</div>
+          <div class="stat-label">Grade</div>
+        </div>
+        <div class="stat-box">
+          <div class="stat-value">3</div>
+          <div class="stat-label">Files Analyzed</div>
+        </div>
+        <div class="stat-box">
+          <div class="stat-value">17</div>
+          <div class="stat-label">Tests Analyzed</div>
+        </div>
+      </div>
+    </div>
+
+    <div class="card">
+      <h2>📈 Score Distribution</h2>
+      <div class="distribution-bar">
+        <div class="bar-a" style="flex: 2">2</div>
+        
+        <div class="bar-c" style="flex: 1">1</div>
+        
+        
+      </div>
+      <div class="distribution-legend">
+        <div class="legend-item"><div class="legend-dot bar-a"></div> A (90-100): 2</div>
+        <div class="legend-item"><div class="legend-dot bar-b"></div> B (80-89): 0</div>
+        <div class="legend-item"><div class="legend-dot bar-c"></div> C (70-79): 1</div>
+        <div class="legend-item"><div class="legend-dot bar-d"></div> D (60-69): 0</div>
+        <div class="legend-item"><div class="legend-dot bar-f"></div> F (0-59): 0</div>
+      </div>
+    </div>
+
+    
+    <div class="card">
+      <h2>✅ All Files Pass!</h2>
+      <p>All 3 files meet the threshold of 70.</p>
+    </div>
+    
+
+    <div class="card">
+      <h2>📋 Scoring Criteria</h2>
+      <div class="criteria-grid">
+        <div class="criteria-item">
+          <div class="criteria-title">Test Name</div>
+          <div class="criteria-weight">25% of score</div>
+          <p style="margin-top: 8px; font-size: 14px;">Descriptive names with action verbs (should, displays, handles)</p>
+        </div>
+        <div class="criteria-item">
+          <div class="criteria-title">Assertions</div>
+          <div class="criteria-weight">30% of score</div>
+          <p style="margin-top: 8px; font-size: 14px;">1-5 assertions per test is ideal</p>
+        </div>
+        <div class="criteria-item">
+          <div class="criteria-title">Nesting Depth</div>
+          <div class="criteria-weight">20% of score</div>
+          <p style="margin-top: 8px; font-size: 14px;">Flat structure, minimal nesting (1-3 levels)</p>
+        </div>
+        <div class="criteria-item">
+          <div class="criteria-title">Test Length</div>
+          <div class="criteria-weight">25% of score</div>
+          <p style="margin-top: 8px; font-size: 14px;">10-30 lines per test is ideal</p>
+        </div>
+      </div>
+    </div>
+
+    <div class="card">
+      <h2>📁 All Files</h2>
+      <div class="file-list">
+        
+          <div class="file-item">
+            <div class="file-header" onclick="this.parentElement.classList.toggle('expanded')">
+              <span class="file-path">poor-tests.spec.ts</span>
+              <div class="file-meta">
+                <span class="grade-badge score-c">70/100</span>
+                <span>6 tests</span>
+                <span>92 lines</span>
+                <span class="expand-icon">▼</span>
+              </div>
+            </div>
+            <div class="file-content">
+              
+                <div class="test-item">
+                  <div class="test-name">
+                    <span class="grade-badge score-d">60</span>
+                    "test1" <span style="color: #999;">(line 10)</span>
+                  </div>
+                  <div class="test-scores">
+                    <span class="test-score-item">Name: 25</span>
+                    <span class="test-score-item">Assertions: 30</span>
+                    <span class="test-score-item">Nesting: 100</span>
+                    <span class="test-score-item">Length: 100</span>
+                  </div>
+                </div>
+              
+                <div class="test-item">
+                  <div class="test-name">
+                    <span class="grade-badge score-d">60</span>
+                    "works" <span style="color: #999;">(line 16)</span>
+                  </div>
+                  <div class="test-scores">
+                    <span class="test-score-item">Name: 25</span>
+                    <span class="test-score-item">Assertions: 30</span>
+                    <span class="test-score-item">Nesting: 100</span>
+                    <span class="test-score-item">Length: 100</span>
+                  </div>
+                </div>
+              
+                <div class="test-item">
+                  <div class="test-name">
+                    <span class="grade-badge score-b">81</span>
+                    "should handle everything in one test" <span style="color: #999;">(line 24)</span>
+                  </div>
+                  <div class="test-scores">
+                    <span class="test-score-item">Name: 100</span>
+                    <span class="test-score-item">Assertions: 60</span>
+                    <span class="test-score-item">Nesting: 100</span>
+                    <span class="test-score-item">Length: 70</span>
+                  </div>
+                </div>
+              
+                <div class="test-item">
+                  <div class="test-name">
+                    <span class="grade-badge score-b">81</span>
+                    "misc" <span style="color: #999;">(line 72)</span>
+                  </div>
+                  <div class="test-scores">
+                    <span class="test-score-item">Name: 25</span>
+                    <span class="test-score-item">Assertions: 100</span>
+                    <span class="test-score-item">Nesting: 100</span>
+                    <span class="test-score-item">Length: 100</span>
+                  </div>
+                </div>
+              
+                <div class="test-item">
+                  <div class="test-name">
+                    <span class="grade-badge score-d">68</span>
+                    "a" <span style="color: #999;">(line 82)</span>
+                  </div>
+                  <div class="test-scores">
+                    <span class="test-score-item">Name: 55</span>
+                    <span class="test-score-item">Assertions: 30</span>
+                    <span class="test-score-item">Nesting: 100</span>
+                    <span class="test-score-item">Length: 100</span>
+                  </div>
+                </div>
+              
+                <div class="test-item">
+                  <div class="test-name">
+                    <span class="grade-badge score-d">67</span>
+                    "basic test" <span style="color: #999;">(line 87)</span>
+                  </div>
+                  <div class="test-scores">
+                    <span class="test-score-item">Name: 50</span>
+                    <span class="test-score-item">Assertions: 30</span>
+                    <span class="test-score-item">Nesting: 100</span>
+                    <span class="test-score-item">Length: 100</span>
+                  </div>
+                </div>
+              
+            </div>
+          </div>
+          
+          <div class="file-item">
+            <div class="file-header" onclick="this.parentElement.classList.toggle('expanded')">
+              <span class="file-path">mixed-tests.spec.ts</span>
+              <div class="file-meta">
+                <span class="grade-badge score-a">98/100</span>
+                <span>6 tests</span>
+                <span>66 lines</span>
+                <span class="expand-icon">▼</span>
+              </div>
+            </div>
+            <div class="file-content">
+              
+                <div class="test-item">
+                  <div class="test-name">
+                    <span class="grade-badge score-a">100</span>
+                    "should display search results when user enters query" <span style="color: #999;">(line 10)</span>
+                  </div>
+                  <div class="test-scores">
+                    <span class="test-score-item">Name: 100</span>
+                    <span class="test-score-item">Assertions: 100</span>
+                    <span class="test-score-item">Nesting: 100</span>
+                    <span class="test-score-item">Length: 100</span>
+                  </div>
+                </div>
+              
+                <div class="test-item">
+                  <div class="test-name">
+                    <span class="grade-badge score-a">100</span>
+                    "handles empty search" <span style="color: #999;">(line 20)</span>
+                  </div>
+                  <div class="test-scores">
+                    <span class="test-score-item">Name: 100</span>
+                    <span class="test-score-item">Assertions: 100</span>
+                    <span class="test-score-item">Nesting: 100</span>
+                    <span class="test-score-item">Length: 100</span>
+                  </div>
+                </div>
+              
+                <div class="test-item">
+                  <div class="test-name">
+                    <span class="grade-badge score-a">95</span>
+                    "filters work" <span style="color: #999;">(line 28)</span>
+                  </div>
+                  <div class="test-scores">
+                    <span class="test-score-item">Name: 80</span>
+                    <span class="test-score-item">Assertions: 100</span>
+                    <span class="test-score-item">Nesting: 100</span>
+                    <span class="test-score-item">Length: 100</span>
+                  </div>
+                </div>
+              
+                <div class="test-item">
+                  <div class="test-name">
+                    <span class="grade-badge score-a">100</span>
+                    "should validate email format and display appropriate error message" <span style="color: #999;">(line 38)</span>
+                  </div>
+                  <div class="test-scores">
+                    <span class="test-score-item">Name: 100</span>
+                    <span class="test-score-item">Assertions: 100</span>
+                    <span class="test-score-item">Nesting: 100</span>
+                    <span class="test-score-item">Length: 100</span>
+                  </div>
+                </div>
+              
+                <div class="test-item">
+                  <div class="test-name">
+                    <span class="grade-badge score-a">95</span>
+                    "required fields validation" <span style="color: #999;">(line 47)</span>
+                  </div>
+                  <div class="test-scores">
+                    <span class="test-score-item">Name: 80</span>
+                    <span class="test-score-item">Assertions: 100</span>
+                    <span class="test-score-item">Nesting: 100</span>
+                    <span class="test-score-item">Length: 100</span>
+                  </div>
+                </div>
+              
+                <div class="test-item">
+                  <div class="test-name">
+                    <span class="grade-badge score-a">100</span>
+                    "should clear error message when user corrects invalid input" <span style="color: #999;">(line 55)</span>
+                  </div>
+                  <div class="test-scores">
+                    <span class="test-score-item">Name: 100</span>
+                    <span class="test-score-item">Assertions: 100</span>
+                    <span class="test-score-item">Nesting: 100</span>
+                    <span class="test-score-item">Length: 100</span>
+                  </div>
+                </div>
+              
+            </div>
+          </div>
+          
+          <div class="file-item">
+            <div class="file-header" onclick="this.parentElement.classList.toggle('expanded')">
+              <span class="file-path">good-tests.spec.ts</span>
+              <div class="file-meta">
+                <span class="grade-badge score-a">100/100</span>
+                <span>5 tests</span>
+                <span>61 lines</span>
+                <span class="expand-icon">▼</span>
+              </div>
+            </div>
+            <div class="file-content">
+              
+                <div class="test-item">
+                  <div class="test-name">
+                    <span class="grade-badge score-a">100</span>
+                    "should display error message when login fails with invalid credentials" <span style="color: #999;">(line 9)</span>
+                  </div>
+                  <div class="test-scores">
+                    <span class="test-score-item">Name: 100</span>
+                    <span class="test-score-item">Assertions: 100</span>
+                    <span class="test-score-item">Nesting: 100</span>
+                    <span class="test-score-item">Length: 100</span>
+                  </div>
+                </div>
+              
+                <div class="test-item">
+                  <div class="test-name">
+                    <span class="grade-badge score-a">100</span>
+                    "should redirect to dashboard after successful login" <span style="color: #999;">(line 19)</span>
+                  </div>
+                  <div class="test-scores">
+                    <span class="test-score-item">Name: 100</span>
+                    <span class="test-score-item">Assertions: 100</span>
+                    <span class="test-score-item">Nesting: 100</span>
+                    <span class="test-score-item">Length: 100</span>
+                  </div>
+                </div>
+              
+                <div class="test-item">
+                  <div class="test-name">
+                    <span class="grade-badge score-a">100</span>
+                    "should show password strength indicator when typing password" <span style="color: #999;">(line 29)</span>
+                  </div>
+                  <div class="test-scores">
+                    <span class="test-score-item">Name: 100</span>
+                    <span class="test-score-item">Assertions: 100</span>
+                    <span class="test-score-item">Nesting: 100</span>
+                    <span class="test-score-item">Length: 100</span>
+                  </div>
+                </div>
+              
+                <div class="test-item">
+                  <div class="test-name">
+                    <span class="grade-badge score-a">100</span>
+                    "should update total price when quantity changes" <span style="color: #999;">(line 41)</span>
+                  </div>
+                  <div class="test-scores">
+                    <span class="test-score-item">Name: 100</span>
+                    <span class="test-score-item">Assertions: 100</span>
+                    <span class="test-score-item">Nesting: 100</span>
+                    <span class="test-score-item">Length: 100</span>
+                  </div>
+                </div>
+              
+                <div class="test-item">
+                  <div class="test-name">
+                    <span class="grade-badge score-a">100</span>
+                    "should remove item from cart when delete button is clicked" <span style="color: #999;">(line 52)</span>
+                  </div>
+                  <div class="test-scores">
+                    <span class="test-score-item">Name: 100</span>
+                    <span class="test-score-item">Assertions: 100</span>
+                    <span class="test-score-item">Nesting: 100</span>
+                    <span class="test-score-item">Length: 100</span>
+                  </div>
+                </div>
+              
+            </div>
+          </div>
+          
+      </div>
+    </div>
+
+    <div class="timestamp">
+      Generated on 1/12/2026, 4:22:45 PM • Threshold: 70
+    </div>
+  </div>
+</body>
+</html>
